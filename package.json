@@ -37,22 +37,22 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.25.3",
-    "@types/mermaid": "^9.1.0",
-    "@types/node": "^25.0.9",
-    "commander": "^14.0.2",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@types/mermaid": "^9.2.0",
+    "@types/node": "^26.0.1",
+    "commander": "^15.0.0",
     "jszip": "^3.10.1",
-    "mermaid": "^11.12.2",
-    "puppeteer": "^24.35.0",
+    "mermaid": "^11.16.0",
+    "puppeteer": "^25.2.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.3",
     "xmlbuilder2": "^4.0.3",
-    "zod": "^4.3.5"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "copyfiles": "^2.4.1",
-    "jest": "^30.2.0",
-    "ts-jest": "^29.4.6"
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11"
   }
 }
