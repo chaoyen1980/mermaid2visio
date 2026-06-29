@@ -556,31 +556,31 @@ export class VsdxGenerator {
                 addRow(geom, 'LineTo', 4, [['X', 0], ['Y', 'Height']]);
                 addRow(geom, 'LineTo', 5, [['X', 'Width*0.2'], ['Y', 0]]);
             } else if (node.type === 'cylinder') {
-                // Cylinder: single closed outline drawn as one filled path so the inside is
-                // clean (no inner half-oval visible). The top is a half-arc (visible cap),
-                // the sides are straight, and the bottom is a half-arc (visible curve).
-                // Path: top-left → arc-over to top-right (the top cap) → down right side →
-                // arc-under to bottom-left → up left side → close.
+                // Cylinder body: rectangle whose bottom is a half-ellipse bulging out to Y=Height.
+                // Path: top edge straight at Y=0.15H, sides straight, then the bottom arc dips
+                // outward (downward) so the fill extends all the way to the cylinder's bottom.
+                // The visible top cap is drawn separately as a no-fill ellipse outline below.
+                // The bottom arc's A is NEGATIVE so the bow direction matches the cylinder's
+                // outward bulge in Y-up local coords (otherwise the arc bows inward and leaves
+                // a yellow sliver between the chord and the shape's bottom edge).
                 addRow(geom, 'MoveTo', 1, [['X', 0], ['Y', 'Height*0.15']]);
-                // Top half-arc: bows UPWARD to Y=0. For a horizontal chord and left→right
-                // motion, "up" is right-of-motion → A < 0.
-                addRow(geom, 'ArcTo', 2, [['X', 'Width'], ['Y', 'Height*0.15'], ['A', '-Height*0.15']]);
+                addRow(geom, 'LineTo', 2, [['X', 'Width'], ['Y', 'Height*0.15']]);
                 addRow(geom, 'LineTo', 3, [['X', 'Width'], ['Y', 'Height*0.85']]);
-                // Bottom half-arc: bows DOWNWARD to Y=Height. For right→left motion,
-                // "down" is right-of-motion → A < 0 again. Both arcs use A = -Height*0.15.
                 addRow(geom, 'ArcTo', 4, [['X', 0], ['Y', 'Height*0.85'], ['A', '-Height*0.15']]);
                 addRow(geom, 'LineTo', 5, [['X', 0], ['Y', 'Height*0.15']]);
 
-                // Second geometry: front curve of the top cap (the visible "lip" inside the
-                // top of the cylinder). No fill, just the outline so the body fill shows
-                // through underneath. This is the line that suggests 3D depth.
+                // Top cap: full ellipse, outline only. The top half forms the visible upper
+                // curve of the cylinder; the bottom half forms the 3D "depth" lip. NoFill=1
+                // keeps the cap from painting yellow over the orange body inside its lower half.
                 const geom2 = shape.ele('Section', { N: 'Geometry', IX: '1' });
                 geom2.ele('Cell', { N: 'NoFill', V: '1' }).up();
                 geom2.ele('Cell', { N: 'NoLine', V: '0' }).up();
                 geom2.ele('Cell', { N: 'NoShow', V: '0' }).up();
-                addRow(geom2, 'MoveTo', 1, [['X', 0], ['Y', 'Height*0.15']]);
-                // Same chord as the top, but bow DOWNWARD (inside the cylinder): A positive.
-                addRow(geom2, 'ArcTo', 2, [['X', 'Width'], ['Y', 'Height*0.15'], ['A', 'Height*0.15']]);
+                addRow(geom2, 'Ellipse', 1, [
+                    ['X', 'Width*0.5'], ['Y', 'Height*0.15'],   // ellipse center
+                    ['A', 0], ['B', 'Height*0.15'],             // a point on the ellipse (left edge)
+                    ['C', 'Width*0.5'], ['D', 0],               // another point (top edge)
+                ]);
             } else if (node.type === 'subroutine') {
                 addRow(geom, 'MoveTo', 1, [['X', 0], ['Y', 0]]);
                 addRow(geom, 'LineTo', 2, [['X', 'Width'], ['Y', 0]]);
