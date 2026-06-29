@@ -323,30 +323,36 @@ export async function parseMermaid(definition: string): Promise<GraphData> {
                 };
             });
 
-            // Edge Labels
+            // Edge Labels.
+            // Mermaid v10+ emits TWO sets of .edgeLabel elements:
+            //   1. Hidden "measurement" copies inside a top-level <g class="edgeLabels"> that have
+            //      NO transform (or transform="translate(0,0)") and are used only to compute size.
+            //   2. The visible copies placed via transform=translate(cx,cy) on the actual edge midpoint.
+            // We must keep only (2), otherwise (1) piles up as garbled text in the top-left of the page.
+            // Heuristic: skip any .edgeLabel whose transform is missing or evaluates to (0,0), AND
+            // whose ancestor chain includes another .edgeLabels container (the hidden bucket).
             const labels = Array.from(document.querySelectorAll('.edgeLabel')).map(label => {
-                // Mermaid puts labels in a div inside a foreignObject, or directly as text
-                // The .edgeLabel group usually has the transform
                 const transform = label.getAttribute('transform');
                 const match = /translate\(([^,]+),([^)]+)\)/.exec(transform || '');
                 const x = match ? parseFloat(match[1]) : 0;
                 const y = match ? parseFloat(match[2]) : 0;
+                const hasPosition = !!match && !(x === 0 && y === 0);
 
                 const div = label.querySelector('div, foreignObject, text');
                 const bbox = div ? (div as SVGGraphicsElement).getBBox() : { width: 0, height: 0 };
                 const text = label.textContent?.trim() || '';
-                
-                // Attempt to get background color if there's a label box
-                const bgRect = label.querySelector('.label-container rect'); // Sometimes mermaid wraps it
+
+                const bgRect = label.querySelector('.label-container rect');
                 const bgStyle = bgRect ? window.getComputedStyle(bgRect) : null;
                 const textStyle = window.getComputedStyle(div || label);
 
                 return {
                     x,
                     y,
-                    width: bbox.width || 10, // Fallback
+                    width: bbox.width || 10,
                     height: bbox.height || 10,
                     text,
+                    hasPosition,
                     style: {
                         color: textStyle.color,
                         fill: bgStyle?.fill !== 'none' ? bgStyle?.fill : undefined,
@@ -356,7 +362,8 @@ export async function parseMermaid(definition: string): Promise<GraphData> {
                         fontStyle: textStyle.fontStyle
                     }
                 };
-            }).filter(l => l.text); // Filter empty labels
+            }).filter(l => l.text && l.hasPosition)
+              .map(({ hasPosition, ...rest }) => rest); // Drop the helper flag
 
             return {
                 width: graphWidth,
