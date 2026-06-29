@@ -502,14 +502,16 @@ export class VsdxGenerator {
             shape.ele('Cell', { N: 'RightMargin', V: '0.02' }).up();
             shape.ele('Cell', { N: 'TopMargin', V: '0.02' }).up();
             shape.ele('Cell', { N: 'BottomMargin', V: '0.02' }).up();
+            // Center text vertically within the shape (1 = middle)
+            shape.ele('Cell', { N: 'VerticalAlign', V: '1' }).up();
 
-            // Paragraph (Alignment)
-            if (node.style && node.style.textAlign) {
-                shape.ele('Section', { N: 'Paragraph', IX: '0' })
-                    .ele('Row', { IX: '0' })
-                        .ele('Cell', { N: 'HorzAlign', V: getHorzAlign(node.style.textAlign) }).up()
-                    .up().up();
-            }
+            // Paragraph: always center text horizontally inside nodes. Mermaid's foreignObject
+            // labels report textAlign='left' by default (browser default for <div>), which is
+            // not what we want for shape labels — center reads better and matches user intent.
+            shape.ele('Section', { N: 'Paragraph', IX: '0' })
+                .ele('Row', { IX: '0' })
+                    .ele('Cell', { N: 'HorzAlign', V: '1' }).up()
+                .up().up();
 
             // Hyperlink
             if (node.url) {
